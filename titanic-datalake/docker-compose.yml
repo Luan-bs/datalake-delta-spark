@@ -1,0 +1,29 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: titanic-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=admin123
+    volumes:
+      - /home/luanbs/projetos/titanic-datalake/minio-data:/data
+    command: server /data --console-address ":9001"
+
+  jupyter:
+    image: jupyter/pyspark-notebook:latest
+    container_name: titanic-jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - PYSPARK_SUBMIT_ARGS=--packages io.delta:delta-spark_2.12:3.1.0,org.apache.hadoop:hadoop-aws:3.3.4,com.amazonaws:aws-java-sdk-bundle:1.12.262 pyspark-shell
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=admin123
+    volumes:
+      - /home/luanbs/projetos/titanic-datalake:/home/jovyan/work
+    command: start-notebook.sh --NotebookApp.token='' --NotebookApp.password=''
+    depends_on:
+      - minio
